@@ -29,7 +29,7 @@ rsync -avzh --partial --progress \
   --exclude='.mypy_cache/' \
   --exclude='.ruff_cache/' \
   --exclude='.pytest_cache/' \
-  --exclude='wandb/' \
+  --exclude='/wandb/' \
   --exclude='slurm_logs/' \
   --exclude='logs/' \
   ./ "${NETID}@${REMOTE_HOST}:${REMOTE_PATH}"

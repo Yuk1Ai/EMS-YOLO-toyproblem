@@ -1,6 +1,6 @@
 path: ../datasets/ncars_processed
-train: ../datasets/ncars_processed/train
-val: ../datasets/ncars_processed/val
+train: train
+val: val
 
 # Classes
 nc: 1  # number of classes (only car)

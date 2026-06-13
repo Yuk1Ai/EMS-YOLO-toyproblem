@@ -173,7 +173,21 @@ def run(data,
     get_local.clear()
     '''
     pbar = tqdm(dataloader, desc=s, ncols=NCOLS, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')  # progress bar
-    for batch_i, (im, targets, paths) in enumerate(pbar):
+    for batch_i, batch in enumerate(pbar):
+        smoketest = os.environ.get("EMS_YOLO_SMOKETEST")
+        if smoketest is not None:
+            try:
+                limit = int(smoketest)
+                if batch_i >= limit:
+                    LOGGER.info(f"EMS_YOLO_SMOKETEST active: breaking validation loop at batch {batch_i}")
+                    break
+            except ValueError:
+                pass
+        if len(batch) == 4:
+            im, targets, paths, shapes = batch
+        else:
+            im, targets, paths = batch
+            shapes = None
         #cache = get_local.cache
         t1 = time_sync()
         if pt:
@@ -181,6 +195,8 @@ def run(data,
             targets = targets.to(device)
         # im = im.half() if half else im.float()  # uint8 to fp16/32
         im = im.float()
+        if is_coco:
+            im = im.unsqueeze(1).repeat(1, T, 1, 1, 1)
         im /= 255  # 0 - 255 to 0.0 - 1.0   #这个变量什么意思
         nb, timewindow, _, height, width = im.shape  # batch size, channels, height, width 384,672
         t2 = time_sync()

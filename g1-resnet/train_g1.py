@@ -234,7 +234,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     if RANK in [-1, 0]:
 
         val_loader = create_dataloader(val_path, opt.sample_size,opt.T,opt.image_shape, 'val',batch_size // WORLD_SIZE , gs, single_cls,
-                                hyp=hyp, cache=None if noval else opt.cache, rect=True, rank=-1,
+                                hyp=hyp, cache=False, rect=True, rank=-1,
                                 workers=workers, pad=0.5,
                                 prefix=colorstr('val: '))[0]
 
@@ -305,7 +305,15 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         optimizer.zero_grad()
         #for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
         for i, (imgs, targets,paths) in pbar:
-            
+            smoketest = os.environ.get("EMS_YOLO_SMOKETEST")
+            if smoketest is not None:
+                try:
+                    limit = int(smoketest)
+                    if i >= limit:
+                        LOGGER.info(f"EMS_YOLO_SMOKETEST active: breaking training loop at batch {i}")
+                        break
+                except ValueError:
+                    pass
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
 
@@ -540,7 +548,7 @@ def main(opt, callbacks=Callbacks()):
         opt.save_dir = str(increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok))
 
     # DDP mode
-    device = torch.device('cuda:0') #select_device(opt.device, batch_size=opt.batch_size)
+    device = select_device(opt.device, batch_size=opt.batch_size)
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
         assert opt.batch_size % WORLD_SIZE == 0, '--batch-size must be multiple of CUDA device count'

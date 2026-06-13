@@ -20,6 +20,8 @@ wandb
 # Plotting ------------------------------------
 pandas>=1.1.4
 seaborn>=0.11.0
+h5py
+
 
 # Export --------------------------------------
 # coremltools>=4.1  # CoreML export

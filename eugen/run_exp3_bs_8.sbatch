@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=exp3-lr-0.001
+#SBATCH --job-name=exp3-bs-8
 #SBATCH --account=Education-EEMCS-MSc-DSAIT
 #SBATCH --partition=gpu-a100
 #SBATCH --gpus-per-task=1
@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --time=23:59:00
 #SBATCH --mem-per-cpu=8000M
-#SBATCH --output=slurm_logs/exp3-lr-0.001-%j.out
+#SBATCH --output=slurm_logs/exp3-bs-8-%j.out
 
 # Load software modules
 module load 2024r1
@@ -24,12 +24,11 @@ cd g1-resnet
 python3 train_g1.py \
   --data data/gen1.yaml \
   --img 320 \
-  --batch-size 16 \
+  --batch-size 8 \
   --epochs 50 \
   --weights "" \
   --device 0 \
   --project /scratch/$USER/runs/stage2 \
-  --name lr_0.001 \
+  --name bs_8 \
   -T 5 \
-  --lr 0.001 \
   --cache

@@ -91,6 +91,8 @@ class LoadImagesAndLabels(Dataset):
             p = 0
             #print(f"Processing {file_name}...")
             events_file = file_name + '_td.dat'
+            if not os.path.exists(events_file):
+                events_file = file_name + '.h5'
             video = PSEELoader(events_file)#video读取
 
             boxes_file = file_name + '_bbox.npy'
@@ -215,13 +217,23 @@ class LoadImagesAndLabels(Dataset):
 #ATIS数据放在path路径下面，然后记得ATIS文件夹下的路径包含train,val,test,每个文件夹内部以 name_bbox.npy,name_td.dat组成
 #输出的np文件在outpath内，将会生成对应的train,val,test3个子文件夹，随后内部生成文件名对应的txt文件，子文件夹内部以img_name.npy,label_name.npy组成
 
-sample_size = 250000
-image_shape = (240,304)
-T           = 5
-path = '' #use your path
-outpath = ''
+import argparse
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Preprocess Gen1 dataset for EMS-YOLO")
+    parser.add_argument("--path", type=str, required=True, help="Path to raw Gen1 dataset")
+    parser.add_argument("--outpath", type=str, required=True, help="Path to save processed dataset")
+    parser.add_argument("-T", type=int, default=5, help="Number of time-steps")
+    parser.add_argument("--sample-size", type=int, default=250000, help="Sample size in us")
+    return parser.parse_args()
 
-dataset_train = LoadImagesAndLabels(path,outpath, sample_size,T,image_shape, 'train')
-dataset_valid = LoadImagesAndLabels(path,outpath,sample_size,T,image_shape, 'val')
-dataset_test  = LoadImagesAndLabels(path,outpath, sample_size,T,image_shape, 'test')
+if __name__ == "__main__":
+    args = parse_args()
+    image_shape = (240, 304)
+    print(f"Preprocessing Gen1 from: {args.path}")
+    print(f"Output directory: {args.outpath}")
+    print(f"Time-steps T: {args.T}")
+    dataset_train = LoadImagesAndLabels(args.path, args.outpath, args.sample_size, args.T, image_shape, 'train')
+    dataset_valid = LoadImagesAndLabels(args.path, args.outpath, args.sample_size, args.T, image_shape, 'val')
+    dataset_test  = LoadImagesAndLabels(args.path, args.outpath, args.sample_size, args.T, image_shape, 'test')
+

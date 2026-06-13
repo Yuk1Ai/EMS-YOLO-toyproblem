@@ -1,7 +1,7 @@
-path: ../datasets/gen1_processed
-train: ../datasets/gen1_processed/train
-val: ../datasets/gen1_processed/val
-test: ../datasets/gen1_processed/test
+path: ../datasets/gen1_processed_t5
+train: train
+val: val
+test: test
 
 # Classes
 nc: 2  # number of classes

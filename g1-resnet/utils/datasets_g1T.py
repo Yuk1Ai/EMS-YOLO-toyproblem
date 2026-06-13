@@ -118,7 +118,7 @@ def create_dataloader(path,sample_size,T,image_shape, mode,batch_size, stride, s
         #                               pad=pad,
         #                               image_weights=image_weights,
         #                               prefix=prefix)
-        dataset = LoadImagesAndLabels(path, sample_size,T,image_shape, mode,batch=batch_size)
+        dataset = LoadImagesAndLabels(path, sample_size,T,image_shape, mode,batch=batch_size, cache_images=cache)
         
     batch_size = min(batch_size, len(dataset))#len(dataset==？
     nw = min([os.cpu_count() // WORLD_SIZE, batch_size if batch_size > 1 else 0, workers])  # number of workers
@@ -397,8 +397,9 @@ def g1_img2labelpaths(img_paths):
 
 class LoadImagesAndLabels(Dataset):
     cache_version = 0.6  # dataset labels *.cache version
-    def __init__(self,path ,sample_size,T,image_shape, mode="train",prefix='',batch=16):
+    def __init__(self,path ,sample_size,T,image_shape, mode="train",prefix='',batch=16, cache_images=False):
         self.mode = mode        
+        self.cache_images = bool(cache_images)
         self.sample_size =sample_size#defualt is 250000,需要后续去数据集核对
         self.quantization_size = [sample_size//T,1,1]#[50 000 ,1, 1]
         self.h, self.w = image_shape
@@ -458,7 +459,16 @@ class LoadImagesAndLabels(Dataset):
                     self.segments[i] = segment[j]
         
         self.ims = [None] * n
-        #self.npy_files = [Path(f).with_suffix('.npy') for f in self.im_files]
+        if self.cache_images:
+            gb = 0
+            LOGGER.info(f"{prefix}Caching images into RAM ({n} images)...")
+            results = ThreadPool(NUM_THREADS).imap(self.load_image, range(n))
+            pbar = tqdm(enumerate(results), total=n, desc=f"{prefix}Caching images")
+            for i, x in pbar:
+                self.ims[i] = x
+                gb += x.nbytes
+                pbar.desc = f"{prefix}Caching images ({gb / 1E9:.1f}GB)"
+            pbar.close()
 
     def cache_labels(self, path=Path('./labels.cache'), prefix=''):
         # Cache dataset labels, check images and read shapes
@@ -554,8 +564,10 @@ class LoadImagesAndLabels(Dataset):
                     out_img[u] = cv2.resize(im[src_idx], (320, 320))
             
             out_img = np.transpose(out_img, [0, 3, 1, 2])
+            if self.cache_images:
+                self.ims[i] = out_img
             return out_img
-        return self.ims[i]
+        return im
         
 
  
@@ -576,8 +588,12 @@ def verify_image_label(args):
         # verify labels
         if os.path.isfile(lb_file):
             nf = 1  # label found
-            lb = np.loadtxt(lb_file)#, dtype=np.float32)
-            #np.loadtxt
+            with open(lb_file) as f:
+                lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
+            if len(lb):
+                lb = np.array(lb, dtype=np.float32)
+            else:
+                lb = np.zeros((0, 5), dtype=np.float32)
             nl = len(lb)
             if nl:
                 assert lb.shape[1] == 5, f'labels require 5 columns, {lb.shape[1]} columns detected'

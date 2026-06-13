@@ -458,6 +458,8 @@ class LoadImagesAndLabels(Dataset):
             p = 0
             #print(f"Processing {file_name}...")
             events_file = file_name + '_td.dat'
+            if not os.path.exists(events_file):
+                events_file = file_name + '.h5'
             video = PSEELoader(events_file)#video读取
 
             boxes_file = file_name + '_bbox.npy'

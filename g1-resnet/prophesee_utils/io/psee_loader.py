@@ -10,10 +10,70 @@ from . import dat_events_tools as dat
 from . import npy_events_tools as npy_format
 
 
+class H5PSEELoader(object):
+    def __init__(self, h5file):
+        import h5py
+        self.f = h5py.File(h5file, 'r')
+        if "CD" in self.f:
+            self.events = self.f["CD"]["events"]
+        else:
+            self.events = self.f["events"]
+        self.t_col = self.events['t']
+        self.num_events = len(self.t_col)
+        self.current_idx = 0
+        self.current_time = 0
+        self.done = False
+        self.duration_s = self.total_time() * 1e-6
+
+    def total_time(self):
+        if self.num_events == 0:
+            return 0
+        return int(self.t_col[-1])
+
+    def seek_time(self, final_time):
+        if final_time <= 0:
+            self.current_idx = 0
+            self.current_time = 0
+            self.done = False
+            return
+        self.current_idx = np.searchsorted(self.t_col, final_time)
+        self.current_time = final_time
+        self.done = self.current_idx >= self.num_events
+
+    def load_delta_t(self, delta_t):
+        if self.current_idx >= self.num_events:
+            self.done = True
+            return np.empty((0,), dtype=[('x', '<u2'), ('y', '<u2'), ('p', '<u1'), ('t', '<u8')])
+        
+        final_time = self.current_time + delta_t
+        next_idx = np.searchsorted(self.t_col, final_time)
+        
+        if next_idx <= self.current_idx:
+            self.current_time = final_time
+            self.done = self.current_idx >= self.num_events
+            return np.empty((0,), dtype=[('x', '<u2'), ('y', '<u2'), ('p', '<u1'), ('t', '<u8')])
+            
+        chunk = self.events[self.current_idx:next_idx]
+        self.current_idx = next_idx
+        self.current_time = final_time
+        self.done = self.current_idx >= self.num_events
+        return chunk
+
+    def __del__(self):
+        try:
+            self.f.close()
+        except:
+            pass
+
+
 class PSEELoader(object):
     """
-    PSEELoader loads a dat or npy file and stream events
+    PSEELoader loads a dat, npy, or h5 file and stream events
     """
+    def __new__(cls, datfile):
+        if datfile.endswith('.h5') or datfile.endswith('.hdf5'):
+            return H5PSEELoader(datfile)
+        return super(PSEELoader, cls).__new__(cls)
 
     def __init__(self, datfile):
         """
