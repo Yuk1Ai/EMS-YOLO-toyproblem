@@ -1,0 +1,7 @@
+path: C:/TUD_EE_MASTER/Q4/Fundamental Research for Machine and Deep Learning/reproduction/self-made-dataset/generated/toy_motion_12pt_clean/control
+train: train
+val: val
+nc: 2
+names:
+- clockwise
+- counterclockwise
