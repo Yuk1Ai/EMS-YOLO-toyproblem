@@ -51,19 +51,32 @@ colors = Colors()  # create instance for 'from utils.plots import colors'
 
 
 def check_font(font='Arial.ttf', size=10):
-    # Return a PIL TrueType Font, downloading to CONFIG_DIR if necessary
+    # Return a PIL font without requiring a network download.
+    #
+    # The original YOLOv5 helper tries to download Arial.ttf from Ultralytics
+    # when the font is not found. That can fail in offline/restricted
+    # environments and prevents training from even importing val.py. For this
+    # toy experiment, plotting labels is not critical, so local fallbacks are
+    # safer than a hard dependency on a remote font file.
     font = Path(font)
-    font = font if font.exists() else (CONFIG_DIR / font.name)
-    try:
-        return ImageFont.truetype(str(font) if font.exists() else font.name, size)
-    except Exception as e:  # download if missing
-        url = "https://ultralytics.com/assets/" + font.name
-        print(f'Downloading {url} to {font}...')
-        torch.hub.download_url_to_file(url, str(font), progress=False)
+    candidates = [
+        font,
+        CONFIG_DIR / font.name,
+        Path("C:/Windows/Fonts/arial.ttf"),
+        Path("C:/Windows/Fonts/Arial.ttf"),
+        Path("C:/Windows/Fonts/calibri.ttf"),
+        Path("C:/Windows/Fonts/segoeui.ttf"),
+    ]
+    for candidate in candidates:
         try:
-            return ImageFont.truetype(str(font), size)
-        except TypeError:
-            check_requirements('Pillow>=8.4.0')  # known issue https://github.com/ultralytics/yolov5/issues/5374
+            if candidate.exists():
+                return ImageFont.truetype(str(candidate), size)
+        except Exception:
+            continue
+    try:
+        return ImageFont.truetype(font.name, size)
+    except Exception:
+        return ImageFont.load_default()
 
 
 class Annotator:

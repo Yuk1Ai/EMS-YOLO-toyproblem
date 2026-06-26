@@ -533,18 +533,19 @@ class LoadImagesAndLabels(Dataset):
         if im is None: 
             #fn = self.im_files[i]
             #im = cv2.imread(fn)
-            im = np.load(fn)  # shape: (5, 240, 304, 3)
+            im = np.load(fn)  # shape: (source_T, 240, 304, 3)
             
             target_T = self.T
+            source_T = im.shape[0]
             out_img = np.zeros([target_T, 320, 320, 3], dtype=np.uint8)
             
-            if target_T == 5:
-                for t in range(5):
+            if target_T == source_T:
+                for t in range(source_T):
                     out_img[t] = cv2.resize(im[t], (320, 320))
-            elif target_T < 5:
+            elif target_T < source_T:
                 bins = [[] for _ in range(target_T)]
-                for t in range(5):
-                    bin_idx = min(int(t * target_T / 5), target_T - 1)
+                for t in range(source_T):
+                    bin_idx = min(int(t * target_T / source_T), target_T - 1)
                     bins[bin_idx].append(im[t])
                 
                 for u in range(target_T):
@@ -558,9 +559,9 @@ class LoadImagesAndLabels(Dataset):
                         grid_y, grid_x, grid_c = np.meshgrid(np.arange(h), np.arange(w), np.arange(c), indexing='ij')
                         merged = group[idx, grid_y, grid_x, grid_c]
                     out_img[u] = cv2.resize(merged, (320, 320))
-            else:  # target_T > 5
+            else:  # target_T > source_T
                 for u in range(target_T):
-                    src_idx = min(int(u * 5 / target_T), 4)
+                    src_idx = min(int(u * source_T / target_T), source_T - 1)
                     out_img[u] = cv2.resize(im[src_idx], (320, 320))
             
             out_img = np.transpose(out_img, [0, 3, 1, 2])
@@ -719,7 +720,6 @@ def dataset_stats(path='coco128.yaml', autodownload=False, verbose=False, profil
     if verbose:
         print(json.dumps(stats, indent=2, sort_keys=False))
     return stats
-
 
 
 

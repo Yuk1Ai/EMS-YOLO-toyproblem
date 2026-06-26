@@ -1,7 +1,0 @@
-path: ../datasets/ncars_processed
-train: train
-val: val
-
-# Classes
-nc: 1  # number of classes (only car)
-names: ['car']  # class names
