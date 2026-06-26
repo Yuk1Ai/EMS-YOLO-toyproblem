@@ -2,15 +2,15 @@
 
 ## Model hypthesis for the self created dataset
 
-    The aim of this control experiment is to classify clockwise(CW) motion and counter clockwise(CCW) motion. The only controled difference of the dataset is the motion orientation. In the self maded dataset, tempol order is the only reliable difference. Whether the EMS-YOLO model could detect the correct motion orientation is the control experiment tryin to figure out.
+The aim of this control experiment is to classify clockwise(CW) motion and counter clockwise(CCW) motion. The only controled difference of the dataset is the motion orientation. In the self maded dataset, tempol order is the only reliable difference. Whether the EMS-YOLO model could detect the correct motion orientation is the control experiment tryin to figure out.
 
 ### The goal of this dataset:
 
-    Temporal pulse of EMS-YOLO can use the temporal order of the event to detect or classify the objects.
+Temporal pulse of EMS-YOLO can use the temporal order of the event to detect or classify the objects.
 
 ### Positive result:
 
-    For those events with same space content but reversed time order, the EMS-YOLO can successfully detect the clockwise(CW) and counter clockwise(CCW) motions. But when the model compress the time order, for example use T=1 instead of T=5, the detecting performance of EMS-YOLO model will decrease.
+For those events with same space content but reversed time order, the EMS-YOLO can successfully detect the clockwise(CW) and counter clockwise(CCW) motions. But when the model compress the time order, for example use T=1 instead of T=5, the detecting performance of EMS-YOLO model will decrease.
 
 ### Dataset and model
 
@@ -21,7 +21,7 @@ Dataset:
 * The only reliable difference is the temporal order of the five event bins.
 
 Model:
-    Can EMS-YOLO use this unique difference to perform orientation classification detection?
+Can EMS-YOLO use this unique difference to perform orientation classification detection?
 
 ### Core control
 
